@@ -12,6 +12,7 @@ proc _require-go {
     }
 }
 
+## internal
 ## summary: Print the current Git version.
 proc version {
     git describe --tags --always --dirty
@@ -56,17 +57,6 @@ proc penv {
     }
 }
 
-## usage: ./run.ysh test [GO_TEST_ARG ...]
-## summary: Run all tests by default, or pass arguments directly to go test.
-proc test {
-    _require-go
-    if (len(ARGV) === 0) {
-        go test ./...
-    } else {
-        go test @ARGV
-    }
-}
-
 ## summary: Scan Go code and dependencies for known vulnerabilities.
 proc vuln {
     _require-go
@@ -80,17 +70,24 @@ proc vuln {
     return $status
 }
 
-## summary: Run all Go unit tests.
+## usage: ./run.ysh unit-test [GO_TEST_ARG ...]
+## summary: Run all Go unit tests, or pass arguments directly to go test.
 proc unit-test {
-    test
+    _require-go
+    if (len(ARGV) === 0) {
+        go test ./...
+    } else {
+        go test @ARGV
+    }
 }
 
+## internal
 ## summary: Run formatting, lint, vulnerability, and unit-test checks.
 proc pre-commit {
     _require-go
-    var unformatted = $(gofmt -l cmd)
+    var unformatted = $(gofmt -l .)
     if (unformatted !== '') {
-        write -- 'Go files need formatting. Run ./run.ysh fmt, then stage the changes.' >&2
+        write -- 'Go files need formatting. Run ./run.ysh fmt, then commit again.' >&2
         exit 1
     }
     lint
@@ -98,13 +95,15 @@ proc pre-commit {
     unit-test
 }
 
+## internal
 ## summary: Run tests, lint, and build the CLI.
 proc check {
-    test
+    unit-test
     lint
     build
 }
 
+## internal
 ## summary: Run go vet on all packages.
 proc vet {
     _require-go
@@ -123,13 +122,11 @@ case (task) {
     -h | --help | list-tasks {
         _taskfile-list-command @task_args
     }
-    penv | test {
+    penv {
         if (len(task_args) === 1 and (task_args[0] === '-h' or task_args[0] === '--help')) {
             _taskfile-help $task
-        } elif (task === 'penv') {
-            penv @task_args
         } else {
-            test @task_args
+            penv @task_args
         }
     }
     build | check | fmt | lint | pre-commit | unit-test | version | vet | vuln {

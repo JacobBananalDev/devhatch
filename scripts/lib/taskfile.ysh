@@ -1,6 +1,10 @@
 proc _taskfile-list {
     write 'Available tasks:'
     awk '
+        /^## internal$/ {
+            internal = 1
+            next
+        }
         /^## summary:/ {
             summary = substr($0, 13)
             next
@@ -8,8 +12,11 @@ proc _taskfile-list {
         /^proc[[:space:]]/ && summary != "" {
             name = $2
             sub(/[({].*/, "", name)
-            printf "  %-12s %s\n", name, summary
+            if (!internal) {
+                printf "  %-12s %s\n", name, summary
+            }
             summary = ""
+            internal = 0
         }
     ' "$TASK_FILE"
     write

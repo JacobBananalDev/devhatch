@@ -1,0 +1,12 @@
+#!/bin/sh
+set -eu
+
+repo_root=$(git rev-parse --show-toplevel)
+cd "$repo_root"
+
+if ! command -v ysh >/dev/null 2>&1; then
+    printf '%s\n' 'pre-commit: YSH is required; run commits inside ./scripts/shell.sh.' >&2
+    exit 1
+fi
+
+exec ./run.ysh pre-commit

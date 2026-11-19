@@ -21,7 +21,7 @@ RUN set -eux; \
 
 RUN set -eux; \
     apt-get update; \
-    apt-get install -y --no-install-recommends gnupg; \
+    apt-get install -y --no-install-recommends gnupg nano; \
     install -d -m 0755 /etc/apt/keyrings; \
     curl --fail --location --silent --show-error \
         https://packages.microsoft.com/keys/microsoft.asc \
