@@ -1,0 +1,155 @@
+#!/usr/bin/env ysh
+
+const ROOT_DIR = _this_dir
+const TASK_FILE = "$ROOT_DIR/run.ysh"
+source "$ROOT_DIR/scripts/lib/taskfile.ysh"
+cd "$ROOT_DIR"
+
+proc _require-go {
+    if ! command -v go >/dev/null {
+        write -- 'Go was not found. Run ./scripts/shell.sh or add your local Go toolchain to PATH for this session.' >&2
+        exit 1
+    }
+}
+
+## summary: Print the current Git version.
+proc version {
+    git describe --tags --always --dirty
+}
+
+## summary: Build the DevHatch CLI to bin/devhatch.
+proc build {
+    _require-go
+    mkdir -p bin
+    go build -o bin/devhatch ./cmd/devhatch
+}
+
+## summary: Format all Go packages.
+proc fmt {
+    _require-go
+    go fmt ./...
+}
+
+## summary: Run Go vet, Staticcheck, Revive, and YSH syntax checks.
+proc lint {
+    _require-go
+    go vet ./...
+    find . -name .git -prune -o -type f -name '*.ysh' -exec sh -c '
+        for script do ysh -n "$script" >/dev/null || exit; done
+    ' sh {} +
+    CGO_ENABLED=0 go run honnef.co/go/tools/cmd/staticcheck@v0.8.2 ./...
+    CGO_ENABLED=0 go run github.com/mgechev/revive@v1.13.0 -set_exit_status ./...
+}
+
+## usage: ./run.ysh penv COMMAND [ARG ...]
+## summary: Run a command from the repository root with the current environment.
+proc penv {
+    if (len(ARGV) === 0) {
+        _taskfile-help penv >&2
+        exit 2
+    }
+    if (ARGV[0] === 'code') {
+        var code_args = ARGV[1:]
+        exec code --disable-gpu @code_args
+    } else {
+        exec @ARGV
+    }
+}
+
+## usage: ./run.ysh test [GO_TEST_ARG ...]
+## summary: Run all tests by default, or pass arguments directly to go test.
+proc test {
+    _require-go
+    if (len(ARGV) === 0) {
+        go test ./...
+    } else {
+        go test @ARGV
+    }
+}
+
+## summary: Scan Go code and dependencies for known vulnerabilities.
+proc vuln {
+    _require-go
+    var status = 0
+    if ! CGO_ENABLED=0 go run github.com/securego/gosec/v2/cmd/gosec@v2.30.0 -exclude-generated ./... {
+        setvar status = 1
+    }
+    if ! CGO_ENABLED=0 go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./... {
+        setvar status = 1
+    }
+    return $status
+}
+
+## summary: Run all Go unit tests.
+proc unit-test {
+    test
+}
+
+## summary: Run formatting, lint, vulnerability, and unit-test checks.
+proc pre-commit {
+    _require-go
+    var unformatted = $(gofmt -l cmd)
+    if (unformatted !== '') {
+        write -- 'Go files need formatting. Run ./run.ysh fmt, then stage the changes.' >&2
+        exit 1
+    }
+    lint
+    vuln
+    unit-test
+}
+
+## summary: Run tests, lint, and build the CLI.
+proc check {
+    test
+    lint
+    build
+}
+
+## summary: Run go vet on all packages.
+proc vet {
+    _require-go
+    go vet ./...
+}
+
+if (len(ARGV) === 0) {
+    _taskfile-list
+    exit 0
+}
+
+const task = ARGV[0]
+const task_args = ARGV[1:]
+
+case (task) {
+    -h | --help | list-tasks {
+        _taskfile-list-command @task_args
+    }
+    penv | test {
+        if (len(task_args) === 1 and (task_args[0] === '-h' or task_args[0] === '--help')) {
+            _taskfile-help $task
+        } elif (task === 'penv') {
+            penv @task_args
+        } else {
+            test @task_args
+        }
+    }
+    build | check | fmt | lint | pre-commit | unit-test | version | vet | vuln {
+        if (len(task_args) > 0) {
+            _taskfile-no-args $task @task_args
+        }
+        case (task) {
+            build { build }
+            check { check }
+            fmt { fmt }
+            lint { lint }
+            pre-commit { pre-commit }
+            unit-test { unit-test }
+            version { version }
+            vet { vet }
+            vuln { vuln }
+        }
+    }
+    * {
+        write -- "Unknown task '$task'. Run ./run.ysh list-tasks for available tasks." >&2
+        exit 2
+    }
+}

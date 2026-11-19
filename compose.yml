@@ -1,0 +1,33 @@
+services:
+  dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        GO_VERSION: ${GO_VERSION:-1.27.4}
+        DEV_UID: ${DEV_UID:-1000}
+        DEV_GID: ${DEV_GID:-1000}
+    user: "${DEV_UID:-1000}:${DEV_GID:-1000}"
+    hostname: ${HOST_HOSTNAME:-devhatch}
+    working_dir: /workspace
+    environment:
+      DISPLAY: ${DISPLAY:-}
+      # Docker blocks Electron's namespace sandbox; container isolation remains enabled.
+      ELECTRON_DISABLE_SANDBOX: "1"
+      ELECTRON_OZONE_PLATFORM_HINT: x11
+      HOME: /home/devhatch
+      WAYLAND_DISPLAY: ${WAYLAND_SOCKET:-}
+      XDG_RUNTIME_DIR: /run/devhatch-runtime
+      XAUTHORITY: ${XAUTHORITY_HOST:-/tmp/.Xauthority}
+    volumes:
+      - .:/workspace
+      - devhatch-home:/home/devhatch
+      - /tmp/.X11-unix:/tmp/.X11-unix:ro
+      - /run/user:/run/user:ro
+      - ${XAUTHORITY_HOST:-/dev/null}:/tmp/.Xauthority:ro
+    tmpfs:
+      - /run/devhatch-runtime:mode=0700,uid=${DEV_UID:-1000},gid=${DEV_GID:-1000}
+    shm_size: 1gb
+
+volumes:
+  devhatch-home:

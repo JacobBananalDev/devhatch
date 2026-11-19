@@ -1,0 +1,7 @@
+{
+  "name": "DevHatch",
+  "dockerComposeFile": "../compose.yml",
+  "service": "dev",
+  "overrideCommand": true,
+  "workspaceFolder": "/workspace"
+}

@@ -1,0 +1,78 @@
+proc _taskfile-list {
+    write 'Available tasks:'
+    awk '
+        /^## summary:/ {
+            summary = substr($0, 13)
+            next
+        }
+        /^proc[[:space:]]/ && summary != "" {
+            name = $2
+            sub(/[({].*/, "", name)
+            printf "  %-12s %s\n", name, summary
+            summary = ""
+        }
+    ' "$TASK_FILE"
+    write
+    write 'Run ./run.ysh TASK --help for task details.'
+}
+
+proc _taskfile-list-command {
+    if (len(ARGV) > 1) {
+        write -- 'Usage: ./run.ysh list-tasks' >&2
+        exit 2
+    } elif (len(ARGV) === 1) {
+        var task = ARGV[0]
+        _taskfile-help $task
+    } else {
+        _taskfile-list
+    }
+}
+
+proc _taskfile-help (task) {
+    if ! awk -v wanted="$task" '
+        /^## usage:/ {
+            usage = substr($0, 11)
+            next
+        }
+        /^## summary:/ {
+            summary = substr($0, 13)
+            next
+        }
+        /^proc[[:space:]]/ {
+            name = $2
+            sub(/[({].*/, "", name)
+            if (name == wanted && summary != "") {
+                if (usage == "") {
+                    usage = "./run.ysh " wanted
+                }
+                printf "Usage: %s\n%s\n", usage, summary
+                found = 1
+                exit
+            }
+            usage = ""
+            summary = ""
+        }
+        END {
+            if (!found) {
+                exit 1
+            }
+        }
+    ' "$TASK_FILE" {
+        write -- "Unknown task '$task'." >&2
+        return 1
+    }
+}
+
+proc _taskfile-no-args {
+    var task = ARGV[0]
+    var task_args = ARGV[1:]
+
+    if (len(task_args) === 1 and (task_args[0] === '-h' or task_args[0] === '--help')) {
+        _taskfile-help $task
+        exit 0
+    }
+
+    write -- "Task '$task' does not accept arguments." >&2
+    _taskfile-help $task >&2
+    exit 2
+}
