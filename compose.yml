@@ -1,0 +1,10 @@
+services:
+  dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        GO_VERSION: ${GO_VERSION:-1.27.4}
+    working_dir: /workspace
+    volumes:
+      - .:/workspace
