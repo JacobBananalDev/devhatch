@@ -18,10 +18,10 @@ This document outlines the remaining work to complete DevHatch. Items are organi
 **Goal**: Enable `devhatch init go` to generate reproducible Go development environments
 
 ### Core Implementation
-- [ ] Parse `devhatch.yaml` configuration file
-  - [ ] YAML schema definition
-  - [ ] Schema validation
-  - [ ] Error handling and reporting
+- [x] Parse `config.yml` configuration file
+  - [x] YAML schema definition
+  - [x] Schema validation
+  - [x] Error handling and reporting
 - [ ] Go generator implementation
   - [ ] Read `go.mod` to extract version requirements
   - [ ] Generate/update `Dockerfile` with correct Go version
@@ -49,14 +49,14 @@ golang:
 ```
 
 ### Testing
-- [ ] Unit tests for configuration parsing
+- [x] Unit tests for configuration parsing
 - [ ] Unit tests for generator logic
 - [ ] Integration tests with sample Go projects
 - [ ] Cross-platform testing (Linux, Windows/WSL, macOS)
 
 ### Documentation
 - [ ] Update README with `devhatch init go` example
-- [ ] Document `devhatch.yaml` schema
+- [x] Document `config.yml` schema
 - [ ] Add troubleshooting guide for Go projects
 
 ## Milestone 2: Additional Language Support
@@ -120,7 +120,7 @@ golang:
 
 ### Local CI
 - [ ] Pre-push hooks
-- [ ] Pre-commit integration
+- [x] Pre-commit integration
 - [ ] Local validation commands
 
 ## Milestone 5: Advanced Features

@@ -59,7 +59,7 @@ Inside the container shell, the task runner is available:
 ./run.ysh lint
 
 # Run tests
-./run.ysh test
+./run.ysh unit-test
 
 # Security vulnerability scan
 ./run.ysh vuln
@@ -89,11 +89,12 @@ The CLI foundation is in development. Currently available:
 - Core CLI framework with help system
 - Containerized development environment
 - Task runner with comprehensive build/test/lint automation
+- Internal Go package for parsing and validating the `config.yml` schema
 
 **Coming soon:**
 - `devhatch init go` - Go project generator
 - Additional language generators (Node.js, Python, Rust)
-- Configuration validation and schema
+- CLI integration for configuration validation
 - Project bootstrapping and templates
 
 For detailed development information, see [CONTRIBUTING.md](docs/CONTRIBUTING.md) and [ARCHITECTURE.md](docs/ARCHITECTURE.md).

@@ -31,6 +31,7 @@ Please be respectful and constructive in all interactions with the community.
    This builds the Docker image and starts an interactive shell with:
    - Go 1.27.4 (from `go.mod`)
    - YSH task runner
+   - Nano for terminal editing and commit messages
    - VS Code (for GUI development)
    - All project dependencies
 
@@ -41,22 +42,33 @@ Please be respectful and constructive in all interactions with the community.
 
    This runs tests, linting, and builds the project. All should pass.
 
+4. **Enable the Git Pre-Commit Hook**
+   ```bash
+   git config core.hooksPath .githooks
+   git config core.editor nano
+   ```
+
+   These are one-time, local Git settings. The hook runs formatting checks, lint,
+   vulnerability scans, and unit tests before each commit. Commit inside the rebuilt
+   development container so Nano, YSH, and Go are available.
+
 ## Development Workflow
 
-### Available Tasks
+### Common Tasks
 
 Inside the container shell, use the task runner to manage your work:
 
 ```bash
 ./run.ysh list-tasks          # Show all available tasks
 ./run.ysh check               # Run tests, lint, and build (recommended before pushing)
-./run.ysh test                # Run Go tests
+./run.ysh unit-test           # Run Go tests
 ./run.ysh fmt                 # Format Go code
 ./run.ysh lint                # Run Go vet, Staticcheck, Revive, and YSH syntax checks
 ./run.ysh vuln                # Scan for security vulnerabilities
 ./run.ysh build               # Build the binary to bin/devhatch
-./run.ysh pre-commit          # Run all pre-commit checks
 ```
+
+The configured Git hook runs the pre-commit checks automatically.
 
 ### Opening in VS Code
 
@@ -151,16 +163,16 @@ devhatch/
 
 ```bash
 # Run all tests
-./run.ysh test
+./run.ysh unit-test
 
 # Run tests in a specific package
-./run.ysh test ./cmd/devhatch
+./run.ysh unit-test ./cmd/devhatch
 
 # Run with verbose output
-./run.ysh test -v ./...
+./run.ysh unit-test -v ./...
 
 # Run with coverage
-./run.ysh test -cover ./...
+./run.ysh unit-test -cover ./...
 ```
 
 ### Writing Tests

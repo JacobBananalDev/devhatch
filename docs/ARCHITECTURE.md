@@ -27,7 +27,7 @@ DevHatch enables developers to maintain clean, isolated development environments
 │  │  ┌──────────────────────────────────────────────────┐  │ │
 │  │  │   Language Toolchain (Go, Node, Python, etc.)   │  │ │
 │  │  │  ┌──────────────────────────────────────────┐   │  │ │
-│  │  │  │  devhatch.yaml                           │   │  │ │
+│  │  │  │  config.yml                              │   │  │ │
 │  │  │  │  - Version specifications                │   │  │ │
 │  │  │  │  - Dependencies                          │   │  │ │
 │  │  │  │  - Custom configuration                 │   │  │ │
@@ -45,7 +45,7 @@ DevHatch enables developers to maintain clean, isolated development environments
 
 **Key Responsibilities**:
 - Parse and validate command-line arguments
-- Load and validate project configuration (`devhatch.yaml`)
+- Load and validate project configuration (`config.yml`)
 - Delegate to appropriate generators
 - Provide help and version information
 
@@ -99,25 +99,31 @@ DevHatch enables developers to maintain clean, isolated development environments
 
 ## Configuration
 
-### Project Configuration (devhatch.yaml)
+### Project Configuration (`config.yml`)
 
-Each project using DevHatch includes a `devhatch.yaml` file (not yet implemented):
+Each project using DevHatch can include a `config.yml` file. The configuration parser
+is available in the internal Go package and validates the schema before a generator uses it:
 
 ```yaml
 version: 1
 language: go
 golang:
-  version: "1.27.4"
+  version: "1.27.4" # Optional; generators can infer it from go.mod
   modules:
-    - path: ./cmd/devhatch
+    - path: ./cmd/app
+      output: bin/app
   dependencies:
-    - github.com/some/package@latest
+    - github.com/some/package@v1.2.3
+  cgo_enabled: false
+  cross_compile:
+    - goos: windows
+      goarch: amd64
 ```
 
-**Parser** (to be implemented):
-- Validate YAML schema
-- Extract version constraints
-- Pass configuration to generators
+The parser rejects unsupported schema versions and languages, unknown fields, malformed
+YAML, and incomplete module or cross-compilation entries. Its `LoadFile` helper reads the
+fixed `config.yml` filename from the project directory. CLI integration and generator use
+remain future work.
 
 ## Generator Framework
 
@@ -126,7 +132,7 @@ Generators produce the project-specific Docker setup and configuration.
 ### Generator Interface (to be implemented)
 
 Each generator implements:
-- **Validation**: Check `devhatch.yaml` for language-specific fields
+- **Validation**: Check `config.yml` for language-specific fields
 - **Generation**: Create `Dockerfile`, `compose.yml`, or other files
 - **Verification**: Ensure generated environment is correct
 
@@ -214,7 +220,7 @@ For GUI applications (VS Code) in containers:
 
 3. Make changes
    └─ Edit code
-   └─ Run tests: ./run.ysh test
+   └─ Run tests: ./run.ysh unit-test
    └─ Lint: ./run.ysh lint
 
 4. Pre-commit checks
@@ -259,7 +265,7 @@ For GUI applications (VS Code) in containers:
 
 New generators can be added by implementing:
 
-1. **Configuration Parser**: Read language-specific config from `devhatch.yaml`
+1. **Configuration Parser**: Read language-specific config from `config.yml`
 2. **Validation**: Check for required fields and constraints
 3. **Code Generation**: Create Docker configuration
 4. **CLI Command**: Register with main CLI app
