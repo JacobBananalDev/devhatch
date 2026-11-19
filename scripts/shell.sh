@@ -29,6 +29,19 @@ fi
 export GO_VERSION
 cd "$PROJECT_ROOT"
 
+if ! command -v code >/dev/null 2>&1; then
+    printf '%s\n' "shell.sh: VS Code's 'code' command was not found; install Dev Containers manually if needed." >&2
+elif ! INSTALLED_EXTENSIONS=$(code --list-extensions); then
+    printf '%s\n' "shell.sh: Could not list VS Code extensions." >&2
+    exit 1
+elif ! printf '%s\n' "$INSTALLED_EXTENSIONS" | grep -Fxiq 'ms-vscode-remote.remote-containers'; then
+    printf '%s\n' "Installing the VS Code Dev Containers extension..."
+    if ! code --install-extension ms-vscode-remote.remote-containers; then
+        printf '%s\n' "shell.sh: Could not install the VS Code Dev Containers extension." >&2
+        exit 1
+    fi
+fi
+
 HOST_USER=$(id -un)
 HOST_NAME=$(hostname)
 DEV_UID=$(id -u)
@@ -36,6 +49,18 @@ DEV_GID=$(id -g)
 HOST_HOSTNAME=$HOST_NAME
 XAUTHORITY_HOST=${XAUTHORITY:-/dev/null}
 PROMPT_PATH=$PROJECT_ROOT
+WAYLAND_SOCKET=
+
+if [ -n "${WAYLAND_DISPLAY:-}" ] && [ -n "${XDG_RUNTIME_DIR:-}" ]; then
+    case "$WAYLAND_DISPLAY" in
+        /*)
+            WAYLAND_SOCKET=$WAYLAND_DISPLAY
+            ;;
+        *)
+            WAYLAND_SOCKET=$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY
+            ;;
+    esac
+fi
 
 case "$PROJECT_ROOT" in
     "$HOME")
@@ -46,8 +71,12 @@ case "$PROJECT_ROOT" in
         ;;
 esac
 
-PROMPT="${HOST_USER}@${HOST_NAME}:${PROMPT_PATH} [ENV] $ "
+if [ -t 1 ] && [ "${TERM:-dumb}" != dumb ]; then
+    PROMPT=$(printf '\033[01;32m%s@%s\033[00m:\033[01;34m%s\033[00m [ENV] $ ' "$HOST_USER" "$HOST_NAME" "$PROMPT_PATH")
+else
+    PROMPT="${HOST_USER}@${HOST_NAME}:${PROMPT_PATH} [ENV] $ "
+fi
 
-export DEV_UID DEV_GID HOST_HOSTNAME XAUTHORITY_HOST
+export DEV_UID DEV_GID HOST_HOSTNAME WAYLAND_SOCKET XAUTHORITY_HOST
 
 exec docker compose run --build --rm -e "PS1=$PROMPT" dev sh -i

@@ -48,7 +48,12 @@ proc penv {
         _taskfile-help penv >&2
         exit 2
     }
-    exec @ARGV
+    if (ARGV[0] === 'code') {
+        var code_args = ARGV[1:]
+        exec code --disable-gpu @code_args
+    } else {
+        exec @ARGV
+    }
 }
 
 ## usage: ./run.ysh test [GO_TEST_ARG ...]

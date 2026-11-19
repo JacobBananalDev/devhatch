@@ -9,7 +9,7 @@ DevHatch simplifies setting up isolated development environments by leveraging D
 - **Containerized Development**: All language toolchains run in Docker containers
 - **Reproducible Environments**: Check in configuration, everyone gets identical setups
 - **Cross-Platform Support**: Works on Linux, Windows (WSL 2), and macOS
-- **Integrated IDE Support**: VS Code GUI forwarding from containerized development
+- **Integrated IDE Support**: VS Code Dev Containers and container GUI forwarding
 - **Multiple Language Support**: Generator framework for Go, Node.js, Python, and more (coming soon)
 
 ## Getting Started
@@ -35,7 +35,7 @@ cd devhatch
 ./scripts/shell.sh
 ```
 
-The container starts automatically. You'll see a shell prompt with your host user, hostname, and project path:
+The launcher installs the Dev Containers extension in host VS Code if the `code` command is available and the extension is missing. The container starts automatically. You'll see a shell prompt with your host user, hostname, and project path:
 
 ```
 user@hostname:~/Projects/devhatch [ENV] $
@@ -72,16 +72,16 @@ The compiled CLI binary is written to `bin/devhatch`.
 
 ### Using VS Code
 
-Launch VS Code from inside the container with the workspace already open:
+To use your existing host VS Code profile and sign-in while working in the container:
 
-```bash
-./run.ysh penv code .
-```
+1. Run `./scripts/shell.sh` to install the **Dev Containers** extension, or install it manually in host VS Code.
+2. Open this repository in host VS Code.
+3. Run **Dev Containers: Reopen in Container** from the Command Palette.
 
-The container automatically forwards your host's X11/Wayland display, giving VS Code access to your screen. This workflow is supported on:
-- ✅ Linux with X11/Wayland
-- ✅ Windows with WSLg (from Ubuntu WSL 2 terminal)
-- ⚠️ macOS (container shell available, GUI forwarding not configured)
+The VS Code interface stays on the host; terminals and workspace extensions run in the container.
+If an existing Dev Container exits immediately, run **Dev Containers: Rebuild Container** to apply the updated configuration.
+
+Alternatively, `./run.ysh penv code .` inside `./scripts/shell.sh` launches a separate VS Code installation in the container. Its profile is stored in a Docker volume and does not use your host VS Code sign-in. This GUI workflow requires X11 (including WSLg); Electron's sandbox is disabled in the container, so only open trusted workspaces.
 
 ### Current Status
 

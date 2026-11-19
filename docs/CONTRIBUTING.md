@@ -60,18 +60,9 @@ Inside the container shell, use the task runner to manage your work:
 
 ### Opening in VS Code
 
-To edit with a graphical editor:
+The shell launcher installs the **Dev Containers** extension in host VS Code when the `code` command is available. Alternatively, install it manually. Open the repository in host VS Code and run **Dev Containers: Reopen in Container** from the Command Palette. Your host VS Code profile and sign-in remain available, while workspace tools run in the container.
 
-```bash
-./run.ysh penv code .
-```
-
-VS Code opens inside the container with `/workspace` as the root folder. All Go tools and linters are available inside the container.
-
-**Platform Support:**
-- ✅ Linux with X11/Wayland
-- ✅ Windows with WSLg (run from Ubuntu WSL 2 terminal)
-- ⚠️ macOS (use the container shell, GUI is not configured)
+Alternatively, `./run.ysh penv code .` in the container shell launches a separate container VS Code profile. It does not share the host sign-in and requires X11 or WSLg.
 
 ## Making Changes
 
